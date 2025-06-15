@@ -11,10 +11,10 @@ public:
     float ipk;
 
     Mahasiswa(const char* namaInput, const char* nimInput, float ipkInput) {
-        strcpy(nama, namaInput);
-        strcpy(nim, nimInput);
-        ipk = ipkInput;
-    }
+    strcpy(nama, namaInput);
+    strcpy(nim, nimInput);
+    ipk = ipkInput;
+}
 
     void tampilkanInfoKasual() {
         cout << "> " << nama << " (NIM: " << nim << ") - IPK: " << ipk << endl;
@@ -22,42 +22,19 @@ public:
 };
 
 void quickSort(vector<Mahasiswa*>& data, int low, int high) {
-    if (low >= high) return;
-
-    float pivot = data[high]->ipk;
-    int left = low, right = high - 1;
-
-    while (left <= right) {
-        while (left <= right && data[left]->ipk > pivot) left++;
-        while (left <= right && data[right]->ipk <= pivot) right--;
-        if (left < right) swap(data[left], data[right]);
-    }
-
-    swap(data[left], data[high]);
-
-    quickSort(data, low, left - 1);
-    quickSort(data, left + 1, high);
-}
-
-float hitungTotalBiayaBeasiswa(const vector<Mahasiswa*>& beasiswa, float nominalPerOrang) {
-    return beasiswa.size() * nominalPerOrang;
-}
-
-string formatRupiah(float angka) {
-    int nilai = static_cast<int>(angka);
-    string hasil;
-    string str = to_string(nilai);
-    int len = str.length();
-    int hitung = 0;
-
-    for (int i = len - 1; i >= 0; --i) {
-        hasil.insert(0, 1, str[i]);
-        hitung++;
-        if (hitung % 3 == 0 && i != 0) {
-            hasil.insert(0, 1, '.');
+    if (low < high) {
+        float pivot = data[high]->ipk;
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (data[j]->ipk > pivot) {
+                swap(data[++i], data[j]);
+            }
         }
+        swap(data[i + 1], data[high]);
+        int pi = i + 1;
+        quickSort(data, low, pi - 1);
+        quickSort(data, pi + 1, high);
     }
-    return "Rp" + hasil + ",00";
 }
 
 void distribusiMahasiswa(vector<Mahasiswa*>& data,
@@ -94,6 +71,27 @@ void tampilkanKelompokKasual(const char* namaKelompok, const vector<Mahasiswa*>&
     cout << endl;
 }
 
+float hitungTotalBiayaBeasiswa(const vector<Mahasiswa*>& beasiswa, float nominalPerOrang) {
+    return beasiswa.size() * nominalPerOrang;
+}
+
+string formatRupiah(float angka) {
+    int nilai = static_cast<int>(angka);
+    string hasil;
+    string str = to_string(nilai);
+    int len = str.length();
+    int hitung = 0;
+
+    for (int i = len - 1; i >= 0; --i) {
+        hasil.insert(0, 1, str[i]);
+        hitung++;
+        if (hitung % 3 == 0 && i != 0) {
+            hasil.insert(0, 1, '.');
+        }
+    }
+    return "Rp" + hasil + ",00";
+}
+
 int main() {
     vector<Mahasiswa*> semuaMahasiswa;
     int jumlah;
@@ -119,5 +117,35 @@ int main() {
 
     quickSort(semuaMahasiswa, 0, semuaMahasiswa.size() - 1);
 
-    return 0;
+    vector<Mahasiswa*> beasiswa, pertimbangan, tidakLolos;
+    distribusiMahasiswa(semuaMahasiswa, beasiswa, pertimbangan, tidakLolos);
+
+    tampilkanKelompokKasual("[ MAHASISWA LOLOS BEASISWA ]", beasiswa);
+    tampilkanKelompokKasual("[ MAHASISWA DALAM PERTIMBANGAN ]", pertimbangan);
+    tampilkanKelompokKasual("[ MAHASISWA TIDAK LOLOS ]", tidakLolos);
+
+    float nominalPerMahasiswa = 1500000.0f;
+    float totalBiaya = hitungTotalBiayaBeasiswa(beasiswa, nominalPerMahasiswa);
+
+    cout << "Total Biaya Beasiswa: " << formatRupiah(totalBiaya) << " (" 
+         << beasiswa.size() << " mahasiswa x " << formatRupiah(nominalPerMahasiswa) << ")\n\n";
+
+    queue<string> antrian;
+    for (size_t i = 0; i < pertimbangan.size(); ++i) {
+        antrian.push(string(pertimbangan[i]->nim));
+    }
+
+    cout << "Antrian Wawancara Beasiswa:\n";
+    int nomor = 1;
+    while (!antrian.empty()) {
+        cout << "#" << nomor++ << " NIM: " << antrian.front() << endl;
+        antrian.pop();
+    }
+    cout << endl;
+
+    for (size_t i = 0; i < semuaMahasiswa.size(); ++i) {
+        delete semuaMahasiswa[i];
+    }
+
+    return 0;
 }
